@@ -272,24 +272,43 @@ class StorjMonitor {
             return '<div class="mb-2"><small class="text-muted">Vetting info loading...</small></div>';
         }
 
-        const vettingPercentage = (vettingInfo.vetted_count / vettingInfo.total_satellites) * 100;
-        const progressColor = vettingPercentage === 100 ? 'bg-success' : 
-                             vettingPercentage > 50 ? 'bg-warning' : 'bg-info';
-
+        // Parse the status summary to get individual satellite statuses
+        const satelliteButtons = this.createSatelliteButtons(vettingInfo.status_summary);
+        
         return `
             <div class="mb-2">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between mb-1">
                     <small><i class="bi bi-satellite"></i> Satellite Vetting</small>
-                    <small>${vettingInfo.vetted_count}/${vettingInfo.total_satellites} vetted (${vettingPercentage.toFixed(0)}%)</small>
+                    <small>${vettingInfo.vetted_count}/${vettingInfo.total_satellites} vetted</small>
                 </div>
-                <div class="progress" style="height: 4px;">
-                    <div class="progress-bar ${progressColor}" style="width: ${vettingPercentage}%"></div>
-                </div>
-                <div class="mt-1">
-                    <small class="text-muted">${vettingInfo.status_summary}</small>
+                <div class="satellite-buttons">
+                    ${satelliteButtons}
                 </div>
             </div>
         `;
+    }
+
+    createSatelliteButtons(statusSummary) {
+        // Parse status like "saltlake:VETTED,ap1:0.0%,us1:0.0%,eu1:0.0%"
+        const satellites = statusSummary.split(',').map(item => {
+            const [name, status] = item.split(':');
+            const isVetted = status === 'VETTED';
+            const progress = isVetted ? 100 : parseFloat(status.replace('%', '')) || 0;
+            
+            return { name: name.trim(), isVetted, progress, status };
+        });
+
+        return satellites.map(sat => {
+            const buttonClass = sat.isVetted ? 'btn-success' : 'btn-danger';
+            const icon = sat.isVetted ? 'bi-check-circle-fill' : 'bi-x-circle-fill';
+            const title = sat.isVetted ? `${sat.name}: VETTED` : `${sat.name}: ${sat.progress}% progress`;
+            
+            return `
+                <button type="button" class="btn ${buttonClass} btn-sm satellite-btn" title="${title}" disabled>
+                    <i class="bi ${icon}"></i> ${sat.name.toUpperCase()}
+                </button>
+            `;
+        }).join(' ');
     }
 
     updateDashboardCharts() {
@@ -872,7 +891,7 @@ function refreshData() {
     if (storjMonitor) storjMonitor.refreshData();
 }
 
-// Add spin animation for refresh button
+// Add spin animation for refresh button and satellite button styles
 const style = document.createElement('style');
 style.textContent = `
     .spin {
@@ -882,6 +901,29 @@ style.textContent = `
     @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
+    }
+    
+    .satellite-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
+    }
+    
+    .satellite-btn {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-weight: 600;
+        min-width: 45px;
+    }
+    
+    .satellite-btn:disabled {
+        opacity: 1;
+    }
+    
+    .satellite-btn i {
+        margin-right: 2px;
     }
 `;
 document.head.appendChild(style);
