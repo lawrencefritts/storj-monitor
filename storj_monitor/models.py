@@ -17,8 +17,7 @@ class StorjNodeInfo(BaseModel):
     started_at: str = Field(alias="startedAt")
     quic_status: str = Field(alias="quicStatus")
     
-    class Config:
-        allow_population_by_field_name = True
+    model_config = {"populate_by_name": True}
 
 
 class StorjSatelliteInfo(BaseModel):
@@ -31,8 +30,7 @@ class StorjSatelliteInfo(BaseModel):
     ingress_summary: int = Field(alias="ingressSummary", default=0)
     audits: List[Dict[str, Any]] = Field(default_factory=list)
     
-    class Config:
-        allow_population_by_field_name = True
+    model_config = {"populate_by_name": True}
 
 
 class DiskMetrics(BaseModel):
