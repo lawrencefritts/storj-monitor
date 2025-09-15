@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Storj Monitor Debug Test</title>
+    <script>
+        async function testAPI() {
+            console.log('Testing API calls...');
+            
+            try {
+                // Test basic health
+                const healthResponse = await fetch('/health');
+                const healthData = await healthResponse.json();
+                console.log('Health:', healthData);
+                document.getElementById('health').textContent = JSON.stringify(healthData);
+                
+                // Test nodes API
+                const nodesResponse = await fetch('/api/nodes');
+                const nodesData = await nodesResponse.json();
+                console.log('Nodes:', nodesData);
+                document.getElementById('nodes').textContent = JSON.stringify(nodesData, null, 2);
+                
+                // Test system summary
+                const summaryResponse = await fetch('/api/system/summary');
+                const summaryData = await summaryResponse.json();
+                console.log('Summary:', summaryData);
+                document.getElementById('summary').textContent = JSON.stringify(summaryData, null, 2);
+                
+            } catch (error) {
+                console.error('API Test failed:', error);
+                document.getElementById('error').textContent = error.message;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', testAPI);
+    </script>
+</head>
+<body>
+    <h1>Storj Monitor API Debug Test</h1>
+    
+    <h2>Health Check:</h2>
+    <pre id="health">Loading...</pre>
+    
+    <h2>Error (if any):</h2>
+    <pre id="error"></pre>
+    
+    <h2>Nodes Data:</h2>
+    <pre id="nodes">Loading...</pre>
+    
+    <h2>System Summary:</h2>
+    <pre id="summary">Loading...</pre>
+</body>
+</html>

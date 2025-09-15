@@ -1,0 +1,1 @@
+# Web application module for Storj Monitor

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Browser - Storj Monitor</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .code-editor {
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-database"></i>
+                Database Browser
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Database Schema Overview -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-table"></i> Tables</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="tablesContainer">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status"></div>
+                                <div>Loading tables...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-eye"></i> Views</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="viewsContainer">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status"></div>
+                                <div>Loading views...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Editor -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-code-square"></i> SQL Query Editor</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <textarea class="form-control code-editor" id="queryEditor" rows="4" placeholder="Enter your SQL query here... (SELECT statements only)"></textarea>
+                        </div>
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-primary" onclick="executeQuery()">
+                                <i class="bi bi-play-circle"></i> Execute Query
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearQuery()">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-bookmark"></i> Examples
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('latest')">Latest Node Status</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('health')">Health Metrics (24h)</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('disk')">Disk Usage Trends</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('daily')">Daily Summary</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('satellites')">Satellites Overview</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('vetting')">Vetting Status</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="loadExample('satellite_status')">Per-Satellite Status</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div id="queryResult"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Data Viewer -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 id="tableDataTitle"><i class="bi bi-table"></i> Table Data</h5>
+                        <div id="paginationInfo"></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <div id="tableDataContainer">
+                                <div class="text-muted text-center py-4">
+                                    Select a table or view from the schema above to view its data.
+                                </div>
+                            </div>
+                        </div>
+                        <div id="paginationControls" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
+                            <div>
+                                <select class="form-select form-select-sm" id="pageSizeSelect" style="width: auto; display: inline-block;">
+                                    <option value="50">50 rows</option>
+                                    <option value="100" selected>100 rows</option>
+                                    <option value="250">250 rows</option>
+                                    <option value="500">500 rows</option>
+                                </select>
+                            </div>
+                            <div>
+                                <nav aria-label="Table pagination">
+                                    <ul class="pagination pagination-sm mb-0" id="paginationList">
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentTable = null;
+        let currentPage = 0;
+        let pageSize = 100;
+        let totalRows = 0;
+
+        // Load schema on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSchema();
+        });
+
+        async function loadSchema() {
+            try {
+                const response = await fetch('/api/db/schema');
+                const schema = await response.json();
+                
+                displayTables(schema.tables);
+                displayViews(schema.views);
+            } catch (error) {
+                console.error('Error loading schema:', error);
+                document.getElementById('tablesContainer').innerHTML = '<div class="text-danger">Error loading schema</div>';
+                document.getElementById('viewsContainer').innerHTML = '<div class="text-danger">Error loading schema</div>';
+            }
+        }
+
+        function displayTables(tables) {
+            const container = document.getElementById('tablesContainer');
+            if (tables.length === 0) {
+                container.innerHTML = '<div class="text-muted">No tables found</div>';
+                return;
+            }
+
+            const tableList = tables.map(table => `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <a href="#" class="text-decoration-none fw-semibold" onclick="loadTableData('${table.name}')">
+                            ${table.name}
+                        </a>
+                        <small class="text-muted d-block">${table.columns.length} columns</small>
+                    </div>
+                    <span class="badge bg-secondary">${table.row_count.toLocaleString()} rows</span>
+                </div>
+            `).join('');
+
+            container.innerHTML = tableList;
+        }
+
+        function displayViews(views) {
+            const container = document.getElementById('viewsContainer');
+            if (views.length === 0) {
+                container.innerHTML = '<div class="text-muted">No views found</div>';
+                return;
+            }
+
+            const viewList = views.map(view => `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <a href="#" class="text-decoration-none fw-semibold" onclick="loadTableData('${view.name}')">
+                            ${view.name}
+                        </a>
+                        <small class="text-muted d-block">${view.columns.length} columns</small>
+                    </div>
+                    <span class="badge bg-info">${view.row_count.toLocaleString()} rows</span>
+                </div>
+            `).join('');
+
+            container.innerHTML = viewList;
+        }
+
+        async function loadTableData(tableName, page = 0) {
+            currentTable = tableName;
+            currentPage = page;
+            const offset = page * pageSize;
+
+            document.getElementById('tableDataTitle').innerHTML = `<i class="bi bi-table"></i> ${tableName}`;
+            document.getElementById('tableDataContainer').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><div>Loading data...</div></div>';
+
+            try {
+                const response = await fetch(`/api/db/table/${tableName}?limit=${pageSize}&offset=${offset}`);
+                const result = await response.json();
+
+                totalRows = result.total_count;
+                displayTableData(result);
+                updatePagination();
+            } catch (error) {
+                console.error('Error loading table data:', error);
+                document.getElementById('tableDataContainer').innerHTML = '<div class="text-danger">Error loading table data</div>';
+            }
+        }
+
+        function displayTableData(result) {
+            const container = document.getElementById('tableDataContainer');
+            
+            if (result.data.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-4">No data found</div>';
+                return;
+            }
+
+            // Get column names
+            const columns = Object.keys(result.data[0]);
+
+            // Create table
+            let html = '<table class="table table-sm table-striped table-hover"><thead class="table-dark"><tr>';
+            columns.forEach(col => {
+                html += `<th>${col}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            result.data.forEach(row => {
+                html += '<tr>';
+                columns.forEach(col => {
+                    let value = row[col];
+                    if (value === null || value === undefined) {
+                        value = '<span class="text-muted">NULL</span>';
+                    } else if (typeof value === 'string' && value.length > 100) {
+                        value = value.substring(0, 100) + '...';
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(totalRows / pageSize);
+            const info = document.getElementById('paginationInfo');
+            const controls = document.getElementById('paginationControls');
+            
+            info.textContent = `Showing ${currentPage * pageSize + 1}-${Math.min((currentPage + 1) * pageSize, totalRows)} of ${totalRows.toLocaleString()} rows`;
+            
+            if (totalPages > 1) {
+                controls.style.display = 'flex';
+                
+                const paginationList = document.getElementById('paginationList');
+                let paginationHtml = '';
+                
+                // Previous button
+                paginationHtml += `<li class="page-item ${currentPage === 0 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadTableData('${currentTable}', ${currentPage - 1})">Previous</a>
+                </li>`;
+                
+                // Page numbers (show max 5 pages around current)
+                const startPage = Math.max(0, currentPage - 2);
+                const endPage = Math.min(totalPages - 1, currentPage + 2);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadTableData('${currentTable}', ${i})">${i + 1}</a>
+                    </li>`;
+                }
+                
+                // Next button
+                paginationHtml += `<li class="page-item ${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadTableData('${currentTable}', ${currentPage + 1})">Next</a>
+                </li>`;
+                
+                paginationList.innerHTML = paginationHtml;
+            } else {
+                controls.style.display = 'none';
+            }
+        }
+
+        // Page size change handler
+        document.getElementById('pageSizeSelect').addEventListener('change', function() {
+            pageSize = parseInt(this.value);
+            if (currentTable) {
+                loadTableData(currentTable, 0);
+            }
+        });
+
+        async function executeQuery() {
+            const query = document.getElementById('queryEditor').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            const resultContainer = document.getElementById('queryResult');
+            resultContainer.innerHTML = '<div class="alert alert-info"><div class="spinner-border spinner-border-sm me-2"></div>Executing query...</div>';
+
+            try {
+                const response = await fetch('/api/db/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    resultContainer.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${result.error}</div>`;
+                } else {
+                    let html = `<div class="alert alert-success">Query executed successfully. ${result.row_count} row(s) returned.</div>`;
+                    
+                    if (result.data.length > 0) {
+                        const columns = Object.keys(result.data[0]);
+                        html += '<div class="table-container"><table class="table table-sm table-striped"><thead class="table-dark"><tr>';
+                        columns.forEach(col => {
+                            html += `<th>${col}</th>`;
+                        });
+                        html += '</tr></thead><tbody>';
+
+                        result.data.forEach(row => {
+                            html += '<tr>';
+                            columns.forEach(col => {
+                                let value = row[col];
+                                if (value === null || value === undefined) {
+                                    value = '<span class="text-muted">NULL</span>';
+                                } else if (typeof value === 'string' && value.length > 200) {
+                                    value = value.substring(0, 200) + '...';
+                                }
+                                html += `<td>${value}</td>`;
+                            });
+                            html += '</tr>';
+                        });
+
+                        html += '</tbody></table></div>';
+                    }
+                    
+                    resultContainer.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Query error:', error);
+                resultContainer.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> Failed to execute query</div>`;
+            }
+        }
+
+        function clearQuery() {
+            document.getElementById('queryEditor').value = '';
+            document.getElementById('queryResult').innerHTML = '';
+        }
+
+        function loadExample(type) {
+            const examples = {
+                latest: "SELECT * FROM latest_node_status;",
+                health: "SELECT node_name, timestamp, audit_score, suspension_score, online_score FROM metrics_health WHERE timestamp >= datetime('now', '-24 hours') ORDER BY timestamp DESC;",
+                disk: "SELECT node_name, timestamp, used_bytes/1024/1024/1024 as used_gb, available_bytes/1024/1024/1024 as available_gb FROM metrics_disk WHERE timestamp >= datetime('now', '-7 days') ORDER BY timestamp DESC;",
+                daily: "SELECT * FROM daily_summary ORDER BY date DESC LIMIT 30;",
+                satellites: "SELECT * FROM satellites ORDER BY name;",
+                vetting: "SELECT node_name, total_satellites, vetted_count, ROUND(avg_progress * 100, 1) as avg_progress_pct, status_summary FROM vetting_summary ORDER BY vetted_count DESC, avg_progress DESC;",
+                satellite_status: "SELECT node_name, satellite_name, satellite_region, is_vetted, ROUND(vetting_progress * 100, 1) as progress_pct, audit_score, suspension_score, online_score FROM latest_satellite_status ORDER BY node_name, satellite_name;"
+            };
+
+            document.getElementById('queryEditor').value = examples[type];
+        }
+    </script>
+</body>
+</html>

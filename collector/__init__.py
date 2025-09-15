@@ -1,0 +1,1 @@
+# Collector module for Storj Monitor

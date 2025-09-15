@@ -1,0 +1,331 @@
+/* Storj Monitor Dashboard Custom Styles */
+
+:root {
+    --storj-blue: #2683ff;
+    --storj-dark-blue: #1a5bb8;
+    --storj-light-blue: #e6f2ff;
+    --success-green: #28a745;
+    --warning-orange: #fd7e14;
+    --danger-red: #dc3545;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-600: #6c757d;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+}
+
+body {
+    background-color: var(--gray-100);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.navbar-brand i {
+    margin-right: 8px;
+    color: var(--storj-blue);
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--gray-200);
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Status Cards */
+.status-card {
+    border-left: 4px solid;
+    transition: transform 0.2s ease-in-out;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+}
+
+.status-card.healthy {
+    border-left-color: var(--success-green);
+}
+
+.status-card.warning {
+    border-left-color: var(--warning-orange);
+}
+
+.status-card.critical {
+    border-left-color: var(--danger-red);
+}
+
+/* Health Status Indicators */
+.health-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.health-indicator.healthy {
+    background-color: var(--success-green);
+}
+
+.health-indicator.warning {
+    background-color: var(--warning-orange);
+}
+
+.health-indicator.critical {
+    background-color: var(--danger-red);
+}
+
+/* Progress Bars */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    border-radius: 4px;
+}
+
+/* Metrics Display */
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 4px;
+}
+
+.metric-change {
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.metric-change.positive {
+    color: var(--success-green);
+}
+
+.metric-change.negative {
+    color: var(--danger-red);
+}
+
+/* Node Status Cards */
+.node-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.node-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    transform: rotate(45deg);
+    transition: all 0.3s ease;
+}
+
+.node-card:hover::before {
+    top: -100%;
+    right: -100%;
+}
+
+.node-card.healthy {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.node-card.warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.node-card.critical {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+}
+
+/* Event Styles */
+.event-item {
+    border-left: 4px solid;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 0 8px 8px 0;
+}
+
+.event-item.critical {
+    border-left-color: var(--danger-red);
+    background-color: #fdf2f2;
+}
+
+.event-item.warning {
+    border-left-color: var(--warning-orange);
+    background-color: #fef9f3;
+}
+
+.event-item.info {
+    border-left-color: var(--storj-blue);
+    background-color: var(--storj-light-blue);
+}
+
+.event-time {
+    font-size: 0.75rem;
+    color: var(--gray-600);
+}
+
+/* Charts */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 10px 0;
+}
+
+/* Tables */
+.table-hover tbody tr:hover {
+    background-color: var(--storj-light-blue);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--storj-blue);
+    border-color: var(--storj-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--storj-dark-blue);
+    border-color: var(--storj-dark-blue);
+}
+
+/* Loading States */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .metric-value {
+        font-size: 1.25rem;
+    }
+    
+    .node-card {
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-200);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-600);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-800);
+}
+
+/* Utilities */
+.text-storj {
+    color: var(--storj-blue);
+}
+
+.bg-storj {
+    background-color: var(--storj-blue);
+}
+
+.border-storj {
+    border-color: var(--storj-blue);
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Status Badge */
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.status-badge.online {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success-green);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge.offline {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: var(--danger-red);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.status-badge.warning {
+    background-color: rgba(253, 126, 20, 0.2);
+    color: var(--warning-orange);
+    border: 1px solid rgba(253, 126, 20, 0.3);
+}
