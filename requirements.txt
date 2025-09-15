@@ -1,6 +1,6 @@
 # Core Python dependencies
 # FastAPI and ASGI server
-fastapi==0.115.0
+fastapi==0.116.1
 uvicorn[standard]==0.30.6
 
 # HTTP client for async requests
@@ -16,8 +16,8 @@ PyYAML==6.0.2
 # Async SQLite database
 aiosqlite==0.20.0
 
-# Template engine (used by FastAPI)
-Jinja2==3.1.4
+# Template engine (used by FastAPI) - Updated for security
+Jinja2==3.1.6
 
 # Testing framework and tools
 pytest==8.3.3
