@@ -3,7 +3,7 @@
 class StorjMonitor {
     constructor() {
         this.apiBase = '/api';
-        this.refreshInterval = 30000; // 30 seconds
+        this.refreshInterval = 900000; // 15 minutes (900,000ms)
         this.charts = {};
         this.currentView = 'dashboard';
         this.nodes = [];
@@ -54,6 +54,14 @@ class StorjMonitor {
             console.log('Loading recent events...');
             await this.loadRecentEvents();
             console.log('Loaded recent events:', this.recentEvents);
+            
+            console.log('Loading vetting summary...');
+            await this.loadVettingSummary();
+            console.log('Loaded vetting summary:', this.vettingSummary);
+            
+            console.log('Loading satellites...');
+            await this.loadSatellites();
+            console.log('Loaded satellites:', this.satellites);
             
             console.log('Updating dashboard UI...');
             // Update UI
@@ -129,6 +137,14 @@ class StorjMonitor {
         this.recentEvents = await this.apiCall('/system/events?limit=10');
     }
 
+    async loadVettingSummary() {
+        this.vettingSummary = await this.apiCall('/vetting/summary');
+    }
+
+    async loadSatellites() {
+        this.satellites = await this.apiCall('/satellites');
+    }
+
     async loadNodeHistory(nodeName, hours = 24) {
         const [diskHistory, bandwidthHistory, healthHistory] = await Promise.all([
             this.apiCall(`/nodes/${nodeName}/disk-usage?hours=${hours}`),
@@ -175,6 +191,10 @@ class StorjMonitor {
         const healthStatus = this.getHealthStatus(node);
         const usagePercentage = node.disk_usage_percentage || 0;
         
+        // Get vetting info for this node
+        const vettingInfo = this.getVettingInfo(node.name);
+        const vettingHtml = this.createVettingStatusHtml(vettingInfo);
+        
         col.innerHTML = `
             <div class="card status-card ${healthStatus} h-100">
                 <div class="card-body">
@@ -196,8 +216,8 @@ class StorjMonitor {
                             <div class="metric-value">${(node.audit_score || 0).toFixed(3)}</div>
                         </div>
                         <div class="col-4">
-                            <div class="metric-label">Version</div>
-                            <div class="metric-value">${node.version || 'N/A'}</div>
+                            <div class="metric-label">Satellites</div>
+                            <div class="metric-value">${node.satellites_count || 0}</div>
                         </div>
                     </div>
                     
@@ -212,9 +232,11 @@ class StorjMonitor {
                         </div>
                     </div>
                     
+                    ${vettingHtml}
+                    
                     <small class="text-muted">
                         <i class="bi bi-clock"></i>
-                        Last updated: ${this.formatTime(node.last_updated)}
+                        Last updated: ${this.formatTime(node.last_updated)} | Version: ${node.version || 'N/A'}
                     </small>
                 </div>
             </div>
@@ -238,6 +260,36 @@ class StorjMonitor {
         if (percentage > 90) return 'bg-danger';
         if (percentage > 75) return 'bg-warning';
         return 'bg-success';
+    }
+
+    getVettingInfo(nodeName) {
+        if (!this.vettingSummary) return null;
+        return this.vettingSummary.find(v => v.node_name === nodeName);
+    }
+
+    createVettingStatusHtml(vettingInfo) {
+        if (!vettingInfo) {
+            return '<div class="mb-2"><small class="text-muted">Vetting info loading...</small></div>';
+        }
+
+        const vettingPercentage = (vettingInfo.vetted_count / vettingInfo.total_satellites) * 100;
+        const progressColor = vettingPercentage === 100 ? 'bg-success' : 
+                             vettingPercentage > 50 ? 'bg-warning' : 'bg-info';
+
+        return `
+            <div class="mb-2">
+                <div class="d-flex justify-content-between">
+                    <small><i class="bi bi-satellite"></i> Satellite Vetting</small>
+                    <small>${vettingInfo.vetted_count}/${vettingInfo.total_satellites} vetted (${vettingPercentage.toFixed(0)}%)</small>
+                </div>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar ${progressColor}" style="width: ${vettingPercentage}%"></div>
+                </div>
+                <div class="mt-1">
+                    <small class="text-muted">${vettingInfo.status_summary}</small>
+                </div>
+            </div>
+        `;
     }
 
     updateDashboardCharts() {
