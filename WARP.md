@@ -8,15 +8,15 @@ Storj Monitor is a comprehensive monitoring solution for Storj storage nodes wit
 
 ## Prerequisites
 
-- **Windows 10/11** with PowerShell 5.1 or later
+- **Ubuntu 20.04+** or compatible Linux distribution
 - **Python 3.13.x** (required for optimal compatibility)
-- **Administrator privileges** (for Windows Task Scheduler integration)
+- **sudo privileges** (for systemd service integration)
 - **Active Storj nodes** accessible via dashboard APIs (ports 14002, 14003, etc.)
 
 ## Quick Start Commands
 
 ### Initial Setup
-```powershell
+```bash
 # Setup virtual environment and install dependencies
 .\scripts\setup.ps1
 
@@ -27,7 +27,7 @@ python scripts\init_db.py
 ```
 
 ### Development Commands
-```powershell
+```bash
 # Run all tests
 .\scripts\run_tests.ps1
 
@@ -48,7 +48,7 @@ python scripts\init_db.py
 ```
 
 ### Service Management
-```powershell
+```bash
 # Install collector service (requires admin)
 .\scripts\install_collector.ps1
 
@@ -63,7 +63,7 @@ Show-CollectorLogs -Lines 100
 ```
 
 ### Manual Collection & Testing
-```powershell
+```bash
 # Trigger immediate data collection
 .\scripts\collect_now.ps1
 
@@ -185,7 +185,7 @@ Use `scripts/populate_satellite_sample_data.py` to create test data:
 - Useful for UI development and API testing
 
 ### Database Management
-```powershell
+```bash
 # Clear sample data
 python scripts\clear_sample_data.py
 

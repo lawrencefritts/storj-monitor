@@ -7,16 +7,16 @@ A comprehensive monitoring solution for Storj storage nodes with real-time data 
 - **Real-time Monitoring**: Tracks disk usage, bandwidth, and health metrics from your Storj nodes
 - **Historical Data**: Stores time-series data for trend analysis and performance tracking
 - **Beautiful Dashboard**: Responsive web interface with charts and visualizations
-- **Automated Collection**: Runs as a Windows service collecting data every 30 minutes
+- **Automated Collection**: Runs as a Linux daemon collecting data every 30 minutes
 - **Health Alerts**: Traffic-light status indicators and event notifications
 - **REST API**: Full API access to all collected metrics
 
 ## Prerequisites
 
-- **Windows 10/11** (PowerShell 5.1 or later)
+- **Ubuntu 20.04+** (bash shell)
 - **Python 3.13.x** (required for optimal compatibility)
 - **Storj nodes** accessible via their dashboard APIs (ports 14002, 14003, etc.)
-- **Administrator privileges** (for Windows Task Scheduler integration)
+- **sudo privileges** (for systemd integration)
 
 ## Quick Start
 
@@ -57,7 +57,7 @@ python scripts\init_db.py
 ### 4. Start Services
 
 ```powershell
-# Install and start the data collector as a Windows service
+# Install and start the data collector as a Linux daemon
 .\scripts\install_collector.ps1
 .\scripts\start_collector.ps1
 
