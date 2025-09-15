@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storj Monitor - Simple View</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .node-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .node-card { border-left: 4px solid #28a745; }
+        .healthy { border-left-color: #28a745; }
+        .warning { border-left-color: #ffc107; }
+        .critical { border-left-color: #dc3545; }
+        .stat { display: inline-block; margin-right: 20px; }
+        .stat-label { display: block; font-weight: bold; color: #666; font-size: 0.9em; }
+        .stat-value { display: block; font-size: 1.2em; color: #333; }
+        .header { text-align: center; color: #333; }
+        .refresh-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .refresh-btn:hover { background: #0056b3; }
+        .loading { color: #666; font-style: italic; }
+        .error { color: #dc3545; background: #f8d7da; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header">🛰️ Storj Monitor Dashboard</h1>
+        <p class="header">
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
+            <span id="lastUpdate" class="loading">Loading...</span>
+        </p>
+
+        <div class="card">
+            <h2>📊 System Summary</h2>
+            <div id="systemSummary" class="loading">Loading system summary...</div>
+        </div>
+
+        <div class="card">
+            <h2>🖥️ Node Status</h2>
+            <div id="nodeStatus" class="loading">Loading node status...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                document.getElementById('lastUpdate').innerHTML = '<span class="loading">Loading...</span>';
+                
+                // Load system summary
+                const summaryResponse = await fetch('/api/system/summary');
+                const summary = await summaryResponse.json();
+                displaySystemSummary(summary);
+                
+                // Load nodes
+                const nodesResponse = await fetch('/api/nodes');
+                const nodes = await nodesResponse.json();
+                displayNodes(nodes);
+                
+                document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleString()}`;
+                
+            } catch (error) {
+                document.getElementById('systemSummary').innerHTML = 
+                    `<div class="error">Error loading data: ${error.message}</div>`;
+                document.getElementById('nodeStatus').innerHTML = 
+                    `<div class="error">Error loading nodes: ${error.message}</div>`;
+            }
+        }
+
+        function displaySystemSummary(summary) {
+            const html = `
+                <div class="stat">
+                    <span class="stat-label">Active Nodes</span>
+                    <span class="stat-value">${summary.active_nodes}/${summary.node_count}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Storage Used</span>
+                    <span class="stat-value">${summary.storage_summary.total_used_gb.toFixed(2)} GB</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Storage Available</span>
+                    <span class="stat-value">${summary.storage_summary.total_available_gb.toFixed(2)} GB</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Usage %</span>
+                    <span class="stat-value">${summary.storage_summary.usage_percentage.toFixed(2)}%</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Avg Audit Score</span>
+                    <span class="stat-value">${summary.health_summary.avg_audit_score.toFixed(3)}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Bandwidth</span>
+                    <span class="stat-value">${summary.health_summary.total_bandwidth_used_gb.toFixed(2)} GB</span>
+                </div>
+            `;
+            document.getElementById('systemSummary').innerHTML = html;
+        }
+
+        function displayNodes(nodes) {
+            const html = nodes.map(node => `
+                <div class="node-card card ${node.health_status || 'healthy'}">
+                    <h3>🖥️ ${node.name}</h3>
+                    <p><strong>Description:</strong> ${node.description || 'N/A'}</p>
+                    <p><strong>Node ID:</strong> <code>${node.node_id || 'N/A'}</code></p>
+                    
+                    <div style="margin: 15px 0;">
+                        <div class="stat">
+                            <span class="stat-label">Health Status</span>
+                            <span class="stat-value">${node.health_status || 'healthy'}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Disk Used</span>
+                            <span class="stat-value">${(node.disk_used / 1024**3).toFixed(2)} GB</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Disk Available</span>
+                            <span class="stat-value">${(node.disk_available / 1024**3).toFixed(2)} GB</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Usage %</span>
+                            <span class="stat-value">${(node.disk_usage_percentage || 0).toFixed(2)}%</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 15px 0;">
+                        <div class="stat">
+                            <span class="stat-label">Version</span>
+                            <span class="stat-value">${node.version || 'N/A'}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Satellites</span>
+                            <span class="stat-value">${node.satellites_count || 0}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Audit Score</span>
+                            <span class="stat-value">${(node.audit_score || 0).toFixed(3)}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Suspension Score</span>
+                            <span class="stat-value">${(node.suspension_score || 0).toFixed(3)}</span>
+                        </div>
+                    </div>
+                    
+                    ${node.last_updated ? `<p><small><strong>Last Updated:</strong> ${new Date(node.last_updated).toLocaleString()}</small></p>` : ''}
+                </div>
+            `).join('');
+            
+            document.getElementById('nodeStatus').innerHTML = `<div class="node-grid">${html}</div>`;
+        }
+
+        // Load data when page loads
+        window.onload = loadData;
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
