@@ -1,0 +1,27 @@
+[Unit]
+Description=Storj Monitor Web Application
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=lawre
+Group=lawre
+WorkingDirectory=/home/lawre/storj-monitor
+Environment=PYTHONPATH=/home/lawre/storj-monitor
+ExecStart=/home/lawre/storj-monitor/venv/bin/python -m uvicorn webapp.server:app --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/home/lawre/storj-monitor
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

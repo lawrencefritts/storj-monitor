@@ -1,0 +1,27 @@
+[Unit]
+Description=Storj Monitor Data Collector
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+User=lawre
+Group=lawre
+WorkingDirectory=/home/lawre/storj-monitor
+Environment=PYTHONPATH=/home/lawre/storj-monitor
+ExecStart=/home/lawre/storj-monitor/venv/bin/python collector/service.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/home/lawre/storj-monitor
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
